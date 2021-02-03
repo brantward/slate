@@ -1,7 +1,7 @@
 const chalk = require('chalk');
 const figures = require('figures');
 const https = require('https');
-const themekit = require('@shopify/themekit').command;
+const themekit = require('@shopify/themekit');
 const slateEnv = require('@shopify/slate-env');
 const SlateConfig = require('@shopify/slate-config');
 
@@ -18,7 +18,7 @@ function maybeDeploy() {
   if (filesToDeploy.length) {
     const files = [...filesToDeploy];
     filesToDeploy = [];
-    return deploy('upload', files);
+    return deploy('deploy', files);
   }
 
   return Promise.resolve();
@@ -30,10 +30,10 @@ function _validateEnvValues() {
   if (!result.isValid) {
     console.log(
       chalk.red(
-        `Some values in environment '${slateEnv.getEnvNameValue()}' are invalid:`,
-      ),
+        `Some values in environment '${slateEnv.getEnvNameValue()}' are invalid:`
+      )
     );
-    result.errors.forEach((error) => {
+    result.errors.forEach(error => {
       console.log(chalk.red(`- ${error}`));
     });
 
@@ -41,32 +41,29 @@ function _validateEnvValues() {
   }
 }
 
-function _generateConfigFlags() {
+function _generateConfigFlags(cmdFlags) {
   _validateEnvValues();
 
   const flags = {
-    '--password': slateEnv.getPasswordValue(),
-    '--themeid': slateEnv.getThemeIdValue(),
-    '--store': slateEnv.getStoreValue(),
-    '--env': slateEnv.getEnvNameValue(),
+    password: slateEnv.getPasswordValue(),
+    themeid: slateEnv.getThemeIdValue(),
+    store: slateEnv.getStoreValue(),
+    env: slateEnv.getEnvNameValue(),
   };
   if (slateEnv.getTimeoutValue()) {
-    flags['--timeout'] = slateEnv.getTimeoutValue();
+    flags.timeout = slateEnv.getTimeoutValue();
+  }
+  if (slateEnv.getIgnoreFilesValue()) {
+    flags.ignoredFiles = slateEnv.getIgnoreFilesValue().split(':');
+  }
+  // live theme pre-check already exists within slate, so default to allowLive: true
+  flags.allowLive = true;
+
+  if (['--nodelete'].includes(cmdFlags)) {
+    flags.noDelete = true;
   }
 
   // Convert object to key value pairs and flatten the array
-  return Array.prototype.concat(...Object.entries(flags));
-}
-
-function _generateIgnoreFlags() {
-  const ignoreFiles = slateEnv.getIgnoreFilesValue().split(':');
-  const flags = [];
-
-  ignoreFiles.forEach((pattern) => {
-    flags.push('--ignored-file');
-    flags.push(pattern);
-  });
-
   return flags;
 }
 
@@ -77,20 +74,33 @@ function _generateIgnoreFlags() {
  * @param   files   Array     An array of files to deploy
  * @return          Promise
  */
-async function deploy(cmd = '', files = []) {
-  if (!['upload', 'replace'].includes(cmd)) {
-    throw new Error(
-      'shopify-deploy.deploy() first argument must be either "upload", "replace"',
-    );
+async function deploy(cmd = '', files = [], cmdFlags = '') {
+  if (!['deploy'].includes(cmd)) {
+    throw new Error('shopify-deploy.deploy() first argument must be "deploy"');
   }
 
   deploying = true;
 
-  console.log(chalk.magenta(`\n${figures.arrowUp}  Uploading to Shopify...\n`));
+  console.log(
+    chalk.magenta(
+      `\n${figures.arrowUp}  [local slate] Uploading to Shopify...\n`
+    )
+  );
 
   try {
-    await promiseThemekitConfig();
-    await promiseThemekitDeploy(cmd, files);
+    await themekit.command('configure', _generateConfigFlags(), {
+      cwd: config.get('paths.theme.dist'),
+    });
+    await themekit.command(
+      cmd,
+      {
+        ..._generateConfigFlags(cmdFlags),
+        files,
+      },
+      {
+        cwd: config.get('paths.theme.dist'),
+      }
+    );
   } catch (error) {
     console.error('My Error', error);
   }
@@ -98,51 +108,6 @@ async function deploy(cmd = '', files = []) {
   deploying = false;
 
   return maybeDeploy;
-}
-
-function promiseThemekitConfig() {
-  return new Promise((resolve, reject) => {
-    themekit(
-      {
-        args: [
-          'configure',
-          ..._generateConfigFlags(),
-          ..._generateIgnoreFlags(),
-        ],
-        cwd: config.get('paths.theme.dist'),
-      },
-      (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      },
-    );
-  });
-}
-
-function promiseThemekitDeploy(cmd, files) {
-  return new Promise((resolve, reject) => {
-    themekit(
-      {
-        args: [
-          cmd,
-          '--no-update-notifier',
-          ..._generateConfigFlags(),
-          ...files,
-        ],
-        cwd: config.get('paths.theme.dist'),
-      },
-      (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      },
-    );
-  });
 }
 
 /**
@@ -165,10 +130,10 @@ function fetchMainThemeId() {
           'X-Shopify-Access-Token': slateEnv.getPasswordValue(),
         },
       },
-      (res) => {
+      res => {
         let body = '';
 
-        res.on('data', (datum) => (body += datum));
+        res.on('data', datum => (body += datum));
 
         res.on('end', () => {
           const parsed = JSON.parse(body);
@@ -179,9 +144,9 @@ function fetchMainThemeId() {
                 `API request to fetch main theme ID failed: \n${JSON.stringify(
                   parsed.errors,
                   null,
-                  '\t',
-                )}`,
-              ),
+                  '\t'
+                )}`
+              )
             );
             return;
           }
@@ -192,14 +157,14 @@ function fetchMainThemeId() {
                 `Shopify response for /admin/themes.json is not an array. ${JSON.stringify(
                   parsed,
                   null,
-                  '\t',
-                )}`,
-              ),
+                  '\t'
+                )}`
+              )
             );
             return;
           }
 
-          const mainTheme = parsed.themes.find((t) => t.role === 'main');
+          const mainTheme = parsed.themes.find(t => t.role === 'main');
 
           if (!mainTheme) {
             reject(
@@ -207,16 +172,16 @@ function fetchMainThemeId() {
                 `No main theme in response. ${JSON.stringify(
                   parsed.themes,
                   null,
-                  '\t',
-                )}`,
-              ),
+                  '\t'
+                )}`
+              )
             );
             return;
           }
 
           resolve(mainTheme.id);
         });
-      },
+      }
     );
   });
 }
@@ -233,11 +198,11 @@ module.exports = {
   },
 
   replace() {
-    return deploy('replace');
+    return deploy('deploy');
   },
 
   upload() {
-    return deploy('upload');
+    return deploy('deploy', undefined, '--nodelete');
   },
 
   fetchMainThemeId,

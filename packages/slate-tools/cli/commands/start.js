@@ -71,7 +71,7 @@ Promise.all([
 
     return assetServer.start();
   })
-  .catch((error) => {
+  .catch(error => {
     console.error(error);
     process.exit(1);
   });
@@ -100,7 +100,7 @@ function onCompilerDone(stats) {
 
     console.log(chalk.red('Failed to compile.\n'));
 
-    statsJson.errors.forEach((message) => {
+    statsJson.errors.forEach(message => {
       console.log(`${message}\n`);
     });
   }
@@ -114,7 +114,7 @@ function onCompilerDone(stats) {
 
     console.log(chalk.yellow('Compiled with warnings.\n'));
 
-    statsJson.warnings.forEach((message) => {
+    statsJson.warnings.forEach(message => {
       console.log(`${message}\n`);
     });
   }
@@ -127,7 +127,7 @@ function onCompilerDone(stats) {
 
     console.log(
       `${chalk.green(figures.tick)}  Compiled successfully in ${statsJson.time /
-        1000}s!`,
+        1000}s!`
     );
   }
 }
@@ -161,7 +161,7 @@ async function onClientBeforeSync(files) {
 
   if (skipSettingsData) {
     assetServer.files = files.filter(
-      (file) => !file.endsWith('settings_data.json'),
+      file => !file.endsWith('settings_data.json')
     );
   }
 }
@@ -175,8 +175,8 @@ function onClientSyncSkipped() {
 
   console.log(
     `\n${chalk.blue(
-      figures.info,
-    )}  Skipping first deployment because --skipFirstDeploy flag`,
+      figures.info
+    )}  Skipping first deployment because --skipFirstDeploy flag`
   );
 }
 
@@ -204,10 +204,10 @@ async function onClientAfterSync() {
   console.log();
   console.log(
     `${chalk.yellow(
-      figures.star,
+      figures.star
     )}  You are editing files in theme ${chalk.green(
-      env.getThemeIdValue(),
-    )} on the following store:\n`,
+      env.getThemeIdValue()
+    )} on the following store:\n`
   );
 
   console.log(`      ${chalk.cyan(previewUrl)}`);
@@ -215,12 +215,12 @@ async function onClientAfterSync() {
   console.log();
   console.log(`   Your theme can be previewed at:\n`);
   console.log(
-    `      ${chalk.cyan(urls.get('local'))} ${chalk.grey('(Local)')}`,
+    `      ${chalk.cyan(urls.get('local'))} ${chalk.grey('(Local)')}`
   );
 
   if (devServer.address !== 'localhost') {
     console.log(
-      `      ${chalk.cyan(urls.get('external'))} ${chalk.grey('(External)')}`,
+      `      ${chalk.cyan(urls.get('external'))} ${chalk.grey('(External)')}`
     );
   }
   console.log();
@@ -228,15 +228,15 @@ async function onClientAfterSync() {
 
   console.log(
     `      ${chalk.cyan(`https://localhost:${assetServer.port}`)} ${chalk.grey(
-      '(Local)',
-    )}`,
+      '(Local)'
+    )}`
   );
 
   if (assetServer.address !== 'localhost') {
     console.log(
       `      ${chalk.cyan(
-        `https://${assetServer.address}:${assetServer.port}`,
-      )} ${chalk.grey('(External)')}`,
+        `https://${assetServer.address}:${assetServer.port}`
+      )} ${chalk.grey('(External)')}`
     );
   }
 
@@ -245,11 +245,9 @@ async function onClientAfterSync() {
 
   if (devServer.address !== 'localhost') {
     console.log(
-      `      ${chalk.cyan(urls.get('ui-external'))} ${chalk.grey(
-        '(External)',
-      )}`,
+      `      ${chalk.cyan(urls.get('ui-external'))} ${chalk.grey('(External)')}`
     );
   }
 
-  console.log(chalk.magenta('\nWatching for changes...'));
+  console.log(chalk.magenta('\n[local slate] Watching for changes...'));
 }
