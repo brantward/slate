@@ -1336,6 +1336,21 @@
   resolved "https://registry.yarnpkg.com/@shopify/html-webpack-liquid-asset-tags-plugin/-/html-webpack-liquid-asset-tags-plugin-1.0.0-beta.11.tgz#5bfc0b9394fb3b1dc89c539edc2dc1fd8f9f5471"
   integrity sha512-9fh8Qi5OTLqB5WXeH0oTsfYFT8/fgoK5YKyHPZvEfDbl9JW1jMDwfhjsPhW6d221oPd7UiOC3JDhDdYPN85hyQ==
 
+"@shopify/slate-analytics@1.0.0-beta.16":
+  version "1.0.0-beta.16"
+  resolved "https://registry.yarnpkg.com/@shopify/slate-analytics/-/slate-analytics-1.0.0-beta.16.tgz#80fdd435fad0869340833b202746d31fbd005bca"
+  integrity sha512-Kgn5QgKsPuQ+NiwlRFOD9dckdXGw56qbRtWJFjJ4ySRb5NGnxiGyZxPi8mQoyE9oI5Va7yzT4rL3myVxLttSbw==
+  dependencies:
+    "@shopify/slate-env" "1.0.0-beta.16"
+    "@shopify/slate-error" "1.0.0-beta.14"
+    "@shopify/slate-rc" "1.0.0-beta.14"
+    axios "^0.18.0"
+    chalk "^2.3.0"
+    inquirer "^5.0.1"
+    react-dev-utils "^5.0.0"
+    uuid "^3.2.1"
+    word-wrap "^1.2.3"
+
 "@shopify/slate-liquid-asset-loader@1.0.0-beta.11":
   version "1.0.0-beta.11"
   resolved "https://registry.yarnpkg.com/@shopify/slate-liquid-asset-loader/-/slate-liquid-asset-loader-1.0.0-beta.11.tgz#646a8f6772bb520bcd910bbe1bebcedb8652c4d0"
@@ -11695,7 +11710,7 @@ multipipe@^0.1.2:
   dependencies:
     duplexer2 "0.0.2"
 
-mute-stream@0.0.7, mute-stream@^0.0.7:
+mute-stream@0.0.7:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=

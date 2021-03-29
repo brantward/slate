@@ -10,7 +10,6 @@ const consoleControl = require('console-control-strings');
 const clearConsole = require('react-dev-utils/clearConsole');
 const ip = require('ip');
 const env = require('@shopify/slate-env');
-const {event} = require('@shopify/slate-analytics');
 const SlateConfig = require('@shopify/slate-config');
 
 const promptContinueIfPublishedTheme = require('../prompts/continue-if-published-theme');
@@ -20,7 +19,6 @@ const promptExternalTesting = require('../prompts/external-testing');
 const AssetServer = require('../../tools/asset-server');
 const DevServer = require('../../tools/dev-server');
 const webpackConfig = require('../../tools/webpack/config/dev');
-const packageJson = require('../../package.json');
 const {getAvailablePortSeries} = require('../../tools/utilities');
 
 const config = new SlateConfig(require('../../slate-tools.schema'));
@@ -33,8 +31,6 @@ let continueIfPublishedTheme = null;
 let assetServer;
 let devServer;
 let previewUrl;
-
-event('slate-tools:start:start', {version: packageJson.version});
 
 Promise.all([
   getAvailablePortSeries(config.get('network.startPort'), 3),
@@ -93,11 +89,6 @@ function onCompilerDone(stats) {
   }
 
   if (statsJson.errors.length) {
-    event('slate-tools:start:compile-errors', {
-      errors: statsJson.errors,
-      version: packageJson.version,
-    });
-
     console.log(chalk.red('Failed to compile.\n'));
 
     statsJson.errors.forEach(message => {
@@ -106,12 +97,6 @@ function onCompilerDone(stats) {
   }
 
   if (statsJson.warnings.length) {
-    event('slate-tools:start:compile-warnings', {
-      duration: statsJson.time,
-      warnings: statsJson.warnings,
-      version: packageJson.version,
-    });
-
     console.log(chalk.yellow('Compiled with warnings.\n'));
 
     statsJson.warnings.forEach(message => {
@@ -120,11 +105,6 @@ function onCompilerDone(stats) {
   }
 
   if (!statsJson.errors.length && !statsJson.warnings.length) {
-    event('slate-tools:start:compile-success', {
-      duration: statsJson.time,
-      version: packageJson.version,
-    });
-
     console.log(
       `${chalk.green(figures.tick)}  Compiled successfully in ${statsJson.time /
         1000}s!`
@@ -143,10 +123,6 @@ async function onClientBeforeSync(files) {
     try {
       continueIfPublishedTheme = await promptContinueIfPublishedTheme();
     } catch (error) {
-      event('slate-tools:start:error', {
-        version: packageJson.version,
-        error,
-      });
       console.log(`\n${chalk.red(error)}\n`);
     }
   }
@@ -169,10 +145,6 @@ async function onClientBeforeSync(files) {
 function onClientSyncSkipped() {
   if (!(firstSync && argv.skipFirstDeploy)) return;
 
-  event('slate-tools:start:skip-first-deploy', {
-    version: packageJson.version,
-  });
-
   console.log(
     `\n${chalk.blue(
       figures.info
@@ -180,13 +152,9 @@ function onClientSyncSkipped() {
   );
 }
 
-function onClientSync() {
-  event('slate-tools:start:sync-start', {version: packageJson.version});
-}
+function onClientSync() {}
 
 function onClientSyncDone() {
-  event('slate-tools:start:sync-end', {version: packageJson.version});
-
   process.stdout.write(consoleControl.previousLine(4));
   process.stdout.write(consoleControl.eraseData());
 
