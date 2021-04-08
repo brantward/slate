@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const chalk = require('chalk');
+const {event} = require('@shopify/slate-analytics');
 const SlateConfig = require('@shopify/slate-config');
 
 const config = new SlateConfig(require('../../slate-tools.schema'));
@@ -18,22 +19,25 @@ const zipPath = getZipPath(config.get('paths.theme'), zipName, 'zip');
 const output = fs.createWriteStream(zipPath);
 const archive = archiver('zip');
 
+event('slate-tools:zip:start');
+
 if (!fs.existsSync(config.get('paths.theme.dist'))) {
   console.log(
     chalk.red(
       `${config.get('paths.theme.dist')} was not found. \n` +
-        'Please run the Slate Build script before running Slate Zip'
-    )
+        'Please run the Slate Build script before running Slate Zip',
+    ),
   );
 
   process.exit();
 }
 
 output.on('close', () => {
+  event('slate-tools:zip:end', {size: archive.pointer()});
   console.log(`${path.basename(zipPath)}: ${archive.pointer()} total bytes`);
 });
 
-archive.on('warning', err => {
+archive.on('warning', (err) => {
   if (err.code === 'ENOENT') {
     console.log(err);
   } else {
@@ -41,7 +45,7 @@ archive.on('warning', err => {
   }
 });
 
-archive.on('error', err => {
+archive.on('error', (err) => {
   throw err;
 });
 

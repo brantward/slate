@@ -1,6 +1,7 @@
 const hostedGitInfo = require('hosted-git-info');
 const validateProjectName = require('validate-npm-package-name');
 const env = require('@shopify/slate-env');
+const analytics = require('@shopify/slate-analytics');
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
@@ -16,11 +17,23 @@ module.exports = async function createSlateTheme(name, starter, flags) {
   fs.ensureDirSync(root);
   checkDirForConflicts(root);
 
+  await analytics.init();
+  analytics.event('create-slate-theme:start', {
+    version: packageJson,
+    starter,
+    skipInstall: options.skipInstall,
+    ssh: options.ssh,
+  });
+
   console.log(`\nCreating a new Slate theme in: ${chalk.green(root)}.`);
 
   await getStarterTheme(root, starter, options.ssh);
   await env.create({root});
   await installThemeDeps(root, options);
+
+  analytics.event('create-slate-theme:success', {
+    version: packageJson,
+  });
 };
 
 function checkAppName(name) {
@@ -28,8 +41,8 @@ function checkAppName(name) {
   if (!validationResult.validForNewPackages) {
     console.error(
       `Could not create a project called ${chalk.red(
-        `"${name}"`
-      )} because of npm naming restrictions:`
+        `"${name}"`,
+      )} because of npm naming restrictions:`,
     );
     printValidationResults(validationResult.errors);
     printValidationResults(validationResult.warnings);
@@ -40,7 +53,7 @@ function checkAppName(name) {
 
 function printValidationResults(results) {
   if (typeof results !== 'undefined') {
-    results.forEach(error => {
+    results.forEach((error) => {
       console.error(chalk.red(`  *  ${error}`));
     });
   }
@@ -51,12 +64,12 @@ function printValidationResults(results) {
 // https://github.com/facebookincubator/create-react-app/pull/368#issuecomment-243446094
 function checkDirForConflicts(root) {
   const files = fs.readdirSync(root);
-  const conflicts = files.filter(file => !config.validFiles.includes(file));
+  const conflicts = files.filter((file) => !config.validFiles.includes(file));
 
   if (conflicts.length > 0) {
     console.log();
     console.log(
-      `The directory ${chalk.green(root)} contains files that could conflict:`
+      `The directory ${chalk.green(root)} contains files that could conflict:`,
     );
     console.log();
     for (const file of conflicts) {
@@ -64,7 +77,7 @@ function checkDirForConflicts(root) {
     }
     console.log();
     console.log(
-      'Either try using a new directory name, or remove the files listed above.'
+      'Either try using a new directory name, or remove the files listed above.',
     );
 
     process.exit(1);
@@ -100,10 +113,10 @@ function copyFromDir(starter, root) {
   // 493 = parseInt('755', 8)
   return fs.mkdirp(root, {mode: 493}).then(() => {
     console.log(
-      `Creating new theme from local starter: ${chalk.green(starter)}`
+      `Creating new theme from local starter: ${chalk.green(starter)}`,
     );
     return fs.copy(starter, root, {
-      filter: file =>
+      filter: (file) =>
         !/^\.(git|hg)$/.test(path.basename(file)) && !/node_modules/.test(file),
     });
   });
@@ -129,7 +142,7 @@ function cloneFromGit(hostInfo, root, ssh) {
     .then(() => {
       return fs.remove(path.join(root, '.git'));
     })
-    .catch(error => {
+    .catch((error) => {
       console.log();
       console.log(chalk.red('There was an error while cloning the git repo:'));
       console.log('');
